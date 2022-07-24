@@ -6,6 +6,7 @@ import logoImg from '../../assets/logo.svg';
 import {
   Title,
   Form,
+  Error,
   Repositories,
 } from './styles';
 
@@ -20,17 +21,28 @@ interface IRepository {
 
 const Dashboard = () => {
   const [newRepo, setNewRepo] = useState('');
+  const [inputError, setInputError] = useState('');
   const [repositories, setRepositories] = useState<IRepository[]>([]);
 
   async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
-    const response = await api.get<IRepository>(`repos/${newRepo}`);
+    if (!newRepo) {
+      setInputError('Digite o autor/nome do repositório');
+      return;
+    }
 
-    const repository = response.data;
+    try {
+      const response = await api.get<IRepository>(`repos/${newRepo}`);
 
-    setRepositories([...repositories, repository]);
-    setNewRepo('');
+      const repository = response.data;
+
+      setRepositories([...repositories, repository]);
+      setNewRepo('');
+      setInputError('');
+    } catch {
+      setInputError('Erro na busca por esse repositório');
+    }
   }
 
   return (
@@ -41,6 +53,7 @@ const Dashboard = () => {
       </Title>
 
       <Form
+        hasError={!!inputError}
         onSubmit={handleAddRepository}
       >
         <input
@@ -51,6 +64,10 @@ const Dashboard = () => {
         />
         <button type="submit">Pesquisar</button>
       </Form>
+
+      {
+        !!inputError && <Error>{inputError}</Error>
+      }
 
       <Repositories>
         {
